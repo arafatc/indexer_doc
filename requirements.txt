@@ -1,0 +1,60 @@
+# Document Ingestion System Requirements
+# This workspace contains only document ingestion functionality
+# Optimized for docling with newer transformers
+
+# ===================== CORE LLAMAINDEX =====================
+llama-index>=0.10.0
+llama-index-core>=0.10.0
+
+# ===================== DOCUMENT PROCESSING =====================
+llama-index-readers-docling>=0.1.0
+docling>=1.0.0
+docling-ibm-models>=3.0.0
+
+# ===================== ML & EMBEDDING MODELS =====================
+sentence-transformers>=2.2.2
+transformers>=4.47.0
+tokenizers>=0.22.0
+torch>=2.0.0
+
+# ===================== LLM PROVIDERS =====================
+llama-index-llms-ollama>=0.1.0
+llama-index-llms-openai>=0.1.0
+openai>=1.0.0
+tiktoken>=0.5.0
+
+# ===================== EMBEDDING PROVIDERS =====================
+llama-index-embeddings-ollama>=0.1.0
+llama-index-embeddings-openai>=0.1.0
+
+# ===================== VECTOR & DOCUMENT STORES =====================
+llama-index-vector-stores-postgres>=0.1.0
+llama-index-storage-docstore-postgres>=0.1.0
+
+# ===================== RETRIEVAL & SEARCH =====================
+rank-bm25>=0.2.0
+llama-index-retrievers-bm25>=0.1.0
+sentencepiece>=0.1.0
+
+# ===================== DATABASE =====================
+psycopg2-binary>=2.9.7
+pgvector>=0.2.0
+sqlalchemy>=2.0.0
+
+# ===================== DATA PROCESSING =====================
+numpy>=1.24.0
+pandas>=2.0.0
+
+# ===================== UTILITIES =====================
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+rich>=13.0.0
+click>=8.0.0
+
+# ===================== TESTING (INGESTION ONLY) =====================
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# ===================== DEVELOPMENT (OPTIONAL) =====================
+black>=23.0.0
+flake8>=6.0.0

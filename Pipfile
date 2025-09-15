@@ -1,0 +1,32 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+llama-index = "*"
+llama-index-readers-docling = "*"
+llama-index-embeddings-ollama = "*"
+llama-index-llms-ollama = "*"
+llama-index-vector-stores-postgres = "*"
+llama-index-storage-docstore-postgres = "*"
+python-dotenv = "*"
+psycopg2-binary = "*"
+crewai = "*"
+crewai-tools = "*"
+ragas = "*"
+datasets = "*"
+rank-bm25 = "*"
+llama-index-retrievers-bm25 = "*"
+sentencepiece = "*"
+docling-ibm-models = "*"
+fastapi = "*"
+uvicorn = "*"
+openinference-instrumentation-crewai = "*"
+arize-phoenix-otel = "*"
+openinference-instrumentation-litellm = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
