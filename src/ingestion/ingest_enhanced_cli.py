@@ -28,12 +28,15 @@ def print_header():
     print("STARTING:   LlamaIndex Enhanced Document Ingestion CLI   STARTING:")
     print("FOCUS:" + "=" * 58 + "FOCUS:")
 
-def print_configuration():
+def print_configuration(args=None):
     """Print current configuration"""
+    # Use CLI arg if provided, otherwise use global
+    strategy = args.chunking_strategy if args and args.chunking_strategy else CHUNKING_STRATEGY
+    
     print(f"\n Current Configuration:")
     print(f"   Raw Directory: {RAW_DIR}")
     print(f"   Processed Directory: {PROCESSED_DIR}")
-    print(f"   Chunking Strategy: {CHUNKING_STRATEGY}")
+    print(f"   Chunking Strategy: {strategy}")
     print(f"   Table Extraction: {'SUCCESS: Enabled' if ENABLE_TABLE_EXTRACTION else 'ERROR: Disabled'}")
     print(f"   Image Extraction: {'SUCCESS: Enabled' if ENABLE_IMAGE_EXTRACTION else 'ERROR: Disabled'}")
     print(f"   Contextual RAG: {'SUCCESS: Enabled' if ENABLE_CONTEXTUAL_RAG else 'ERROR: Disabled'}")
@@ -52,7 +55,7 @@ def print_configuration():
 def run_enhanced_ingestion(args):
     """Run the enhanced ingestion process"""
     print_header()
-    print_configuration()
+    print_configuration(args)
     
     if args.dry_run:
         print(f"\nCHECKING: DRY RUN MODE - No actual ingestion will be performed")
@@ -64,8 +67,10 @@ def run_enhanced_ingestion(args):
     
     try:
         # Set environment variables if provided via CLI
+        strategy_to_use = None
         if args.chunking_strategy:
             os.environ['CHUNKING_STRATEGY'] = args.chunking_strategy
+            strategy_to_use = args.chunking_strategy
         if args.enable_tables:
             os.environ['ENABLE_TABLE_EXTRACTION'] = 'true'
         if args.enable_images:
@@ -73,8 +78,8 @@ def run_enhanced_ingestion(args):
         if args.enable_contextual_rag:
             os.environ['ENABLE_CONTEXTUAL_RAG'] = 'true'
         
-        # Run ingestion
-        index = ingest_documents_enhanced()
+        # Run ingestion with strategy parameter
+        index = ingest_documents_enhanced(strategy_to_use)
         
         total_time = time.time() - start_time
         

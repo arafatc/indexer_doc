@@ -207,10 +207,12 @@ def setup_llm_and_embedding():
     
     return llm, embedding
 
-def setup_storage():
+def setup_storage(chunking_strategy=None):
     """Initialize vector store and document store"""
     embed_dim = get_embedding_dim()
     print(f"Setting up storage with embedding dimension: {embed_dim}")
+    print(f"STORAGE: Received strategy parameter: {chunking_strategy}")
+    print(f"STORAGE: Global CHUNKING_STRATEGY: {CHUNKING_STRATEGY}")
     
     # Check for required components
     if PGVectorStore is None:
@@ -219,7 +221,9 @@ def setup_storage():
         raise ImportError("PostgresDocumentStore not available. Install: pip install llama-index-storage-docstore-postgres")
     
     # Strategy-specific table names to avoid mixing
-    strategy_suffix = CHUNKING_STRATEGY.lower()
+    strategy = chunking_strategy or CHUNKING_STRATEGY
+    strategy_suffix = strategy.lower()
+    print(f"STORAGE: Using final strategy: {strategy}")
     vector_table = f"llamaindex_enhanced_{strategy_suffix}"
     docstore_table = f"llamaindex_enhanced_docstore_{strategy_suffix}"
     
@@ -526,9 +530,10 @@ def create_enhanced_chunking_pipeline(llm, embedding):
     
     return pipeline
 
-def create_enhanced_documents(files):
+def create_enhanced_documents(files, chunking_strategy=None):
     """Create LlamaIndex documents with enhanced metadata"""
-    print(f"\nDOCUMENT: Creating enhanced documents from {len(files)} files...")
+    effective_strategy = chunking_strategy or CHUNKING_STRATEGY
+    print(f"\nDOCUMENT: Creating enhanced documents from {len(files)} files with strategy: {effective_strategy}")
     documents = []
     
     for file_path in files:
@@ -548,7 +553,7 @@ def create_enhanced_documents(files):
             "file_extension": os.path.splitext(file_path)[1],
             "file_size": os.path.getsize(file_path),
             "processed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "chunking_strategy": CHUNKING_STRATEGY,
+            "chunking_strategy": effective_strategy,
             "total_structured_elements": len(structured_elements),
             "has_tables": any(el.get('type', '').lower() in ['table', 'table-cell'] for el in structured_elements),
             "has_images": any(el.get('type', '').lower() in ['figure', 'image', 'picture'] for el in structured_elements),
@@ -603,15 +608,19 @@ def create_enhanced_documents(files):
     print(f"  SUCCESS: Created {len(documents)} enhanced documents")
     return documents
 
-def ingest_documents_enhanced():
+def ingest_documents_enhanced(chunking_strategy=None):
     """Enhanced document ingestion with multiple chunking strategies"""
     print("STARTING: Starting Enhanced LlamaIndex Document Ingestion")
     print("=" * 60)
     
+    # Use the provided strategy or fall back to global
+    effective_strategy = chunking_strategy or CHUNKING_STRATEGY
+    print(f"STRATEGY: Using chunking strategy: {effective_strategy}")
+    
     # Setup
     ensure_processed_directories()
     llm, embedding = setup_llm_and_embedding()
-    storage_context = setup_storage()
+    storage_context = setup_storage(effective_strategy)
     
     # Get files
     files = get_files(RAW_DIR, SUPPORTED_EXTENSIONS)
@@ -625,7 +634,7 @@ def ingest_documents_enhanced():
         print(f"   - {os.path.basename(f)}")
     
     # Create documents with enhanced processing
-    documents = create_enhanced_documents(files)
+    documents = create_enhanced_documents(files, chunking_strategy=effective_strategy)
     
     if not documents:
         print("ERROR: No documents created")
@@ -789,7 +798,9 @@ def main():
     print("=" * 60)
     
     try:
-        index = ingest_documents_enhanced()
+        # Pass the updated strategy (either from CLI or global)
+        strategy_to_use = args.strategy.lower() if args.strategy else CHUNKING_STRATEGY
+        index = ingest_documents_enhanced(strategy_to_use)
         
         if index:
             print(f"\n Enhanced ingestion successful!")
