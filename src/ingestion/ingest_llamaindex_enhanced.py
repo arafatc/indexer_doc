@@ -410,14 +410,15 @@ def save_document_as_json(doc, file_path, source_filename, structured_elements):
         print(f"    [ERROR] Failed to save JSON for {source_filename}: {e}")
         return None
 
-def create_enhanced_chunking_pipeline(llm, embedding):
+def create_enhanced_chunking_pipeline(llm, embedding, chunking_strategy=None):
     """Create enhanced chunking pipeline with multiple strategies and citation preservation"""
-    print(f"\nINITIALIZING: Initializing chunking strategy: {CHUNKING_STRATEGY}")
+    effective_strategy = chunking_strategy or CHUNKING_STRATEGY
+    print(f"\nINITIALIZING: Initializing chunking strategy: {effective_strategy}")
     
     transformations = []
     
     # SUCCESS: Strategy 1: Basic Sentence Splitting (Default)
-    if CHUNKING_STRATEGY == "basic":
+    if effective_strategy == "basic":
         node_parser = SentenceSplitter(
             chunk_size=CHUNK_SIZE, 
             chunk_overlap=CHUNK_OVERLAP,
@@ -428,7 +429,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
         print(f"  NOTE: Basic chunking: {CHUNK_SIZE} chars, {CHUNK_OVERLAP} overlap")
     
     # SUCCESS: Strategy 2: Structure-Aware (Markdown-based)  
-    elif CHUNKING_STRATEGY == "structure_aware":
+    elif effective_strategy == "structure_aware":
         # First parse markdown structure, then split
         md_parser = MarkdownNodeParser(include_metadata=True)
         sentence_splitter = SentenceSplitter(
@@ -441,7 +442,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
         print(f"  BUILDING: Structure-aware chunking with markdown parsing")
     
     # SUCCESS: Strategy 3: Semantic Chunking
-    elif CHUNKING_STRATEGY == "semantic":
+    elif effective_strategy == "semantic":
         semantic_parser = SemanticSplitterNodeParser(
             buffer_size=1,  # Number of sentences to group
             breakpoint_percentile_threshold=95,  # Semantic similarity threshold
@@ -452,7 +453,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
         print(f"  FOCUS: Semantic chunking with similarity threshold")
     
     # SUCCESS: Strategy 4: Hierarchical Chunking
-    elif CHUNKING_STRATEGY == "hierarchical":
+    elif effective_strategy == "hierarchical":
         hierarchical_parser = HierarchicalNodeParser.from_defaults(
             chunk_sizes=[2048, 512, 128],  # Multi-level chunks
             chunk_overlap=CHUNK_OVERLAP,
@@ -462,7 +463,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
         print(f"  PROCESSING: Hierarchical chunking: [2048, 512, 128] chars")
     
     # SUCCESS: Strategy 5: Contextual RAG (Advanced metadata extraction)
-    elif CHUNKING_STRATEGY == "contextual_rag":
+    elif effective_strategy == "contextual_rag":
         # Start with sentence splitting
         node_parser = SentenceSplitter(
             chunk_size=CHUNK_SIZE, 
@@ -482,7 +483,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
         print(f"    - Title extraction, Q&A generation, summaries, keywords")
     
     else:
-        raise ValueError(f"Unknown chunking strategy: {CHUNKING_STRATEGY}")
+        raise ValueError(f"Unknown chunking strategy: {effective_strategy}")
     
     # SUCCESS: Always add embedding at the end
     transformations.append(embedding)
@@ -509,7 +510,7 @@ def create_enhanced_chunking_pipeline(llm, embedding):
                     'citation_format': f"{original_metadata.get('source_document', 'Document')} ({original_metadata.get('document_type', 'PDF')})",
                     'retrieval_metadata': {
                         'chunk_length': len(chunk_text),
-                        'strategy': original_metadata.get('chunking_strategy', CHUNKING_STRATEGY),
+                        'strategy': original_metadata.get('chunking_strategy', effective_strategy),
                         'timestamp': original_metadata.get('processed_at', ''),
                         'extraction_method': 'docling_enhanced'
                     }
@@ -641,7 +642,7 @@ def ingest_documents_enhanced(chunking_strategy=None):
         return None
     
     # Create enhanced chunking pipeline
-    pipeline = create_enhanced_chunking_pipeline(llm, embedding)
+    pipeline = create_enhanced_chunking_pipeline(llm, embedding, effective_strategy)
     
     # Process documents through pipeline
     print(f"\nPROCESSING: Processing {len(documents)} documents through enhanced pipeline...")
