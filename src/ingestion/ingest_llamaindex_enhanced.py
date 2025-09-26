@@ -184,8 +184,8 @@ def setup_llm_and_embedding():
     else:
         if Ollama is None:
             raise ImportError("Ollama LLM not available. Install: pip install llama-index-llms-ollama")
-        llm = Ollama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL, request_timeout=120.0)
-        print(f"Using Ollama LLM: {LLM_MODEL}")
+        llm = Ollama(model=LLM_MODEL, base_url=OLLAMA_BASE_URL, request_timeout=600.0)
+        print(f"Using Ollama LLM: {LLM_MODEL} (timeout: 600s)")
     
     # Initialize embedding model
     if EMBEDDING_PROVIDER == "openai":
@@ -201,9 +201,9 @@ def setup_llm_and_embedding():
         embedding = OllamaEmbedding(
             model_name=EMBEDDING_MODEL, 
             base_url=OLLAMA_BASE_URL,
-            request_timeout=120.0
+            request_timeout=600.0
         )
-        print(f"Using Ollama embedding: {EMBEDDING_MODEL}")
+        print(f"Using Ollama embedding: {EMBEDDING_MODEL} (timeout: 600s)")
     
     return llm, embedding
 
@@ -471,16 +471,16 @@ def create_enhanced_chunking_pipeline(llm, embedding, chunking_strategy=None):
         )
         transformations.append(node_parser)
         
-        # Add advanced extractors for contextual information
+        # Add advanced extractors for contextual information (optimized for performance)
         extractors = [
-            TitleExtractor(nodes=5, llm=llm),  # Extract titles from context
-            QuestionsAnsweredExtractor(questions=3, llm=llm),  # Generate questions
-            SummaryExtractor(summaries=["prev", "self"], llm=llm),  # Chunk summaries
-            KeywordExtractor(keywords=10, llm=llm)  # Extract keywords
+            TitleExtractor(nodes=3, llm=llm),  # Extract titles from context (reduced nodes)
+            QuestionsAnsweredExtractor(questions=2, llm=llm),  # Generate questions (reduced count)
+            SummaryExtractor(summaries=["self"], llm=llm),  # Chunk summaries (self only for speed)
+            KeywordExtractor(keywords=5, llm=llm)  # Extract keywords (reduced count)
         ]
         transformations.extend(extractors)
-        print(f"  ANALYZING: Contextual RAG with advanced metadata extraction")
-        print(f"    - Title extraction, Q&A generation, summaries, keywords")
+        print(f"  ANALYZING: Contextual RAG with optimized metadata extraction")
+        print(f"    - Title extraction (3 nodes), Q&A generation (2 questions), summaries (self), keywords (5)")
     
     else:
         raise ValueError(f"Unknown chunking strategy: {effective_strategy}")
@@ -649,7 +649,9 @@ def ingest_documents_enhanced(chunking_strategy=None):
     start_time = time.time()
     
     try:
-        # Run ingestion pipeline
+        # Run ingestion pipeline with progress tracking
+        print(f"  INFO: Running pipeline with {effective_strategy} strategy...")
+        print(f"  INFO: This may take several minutes for large documents with metadata extraction...")
         nodes = pipeline.run(documents=documents)
         
         # SUCCESS: Apply citation enhancement to all chunks
@@ -695,7 +697,17 @@ def ingest_documents_enhanced(chunking_strategy=None):
         return index
         
     except Exception as e:
-        print(f"ERROR: Enhanced ingestion failed: {e}")
+        error_message = str(e)
+        if "ReadTimeout" in error_message or "timeout" in error_message.lower():
+            print(f"ERROR: Timeout occurred during processing!")
+            print(f"  This can happen with large documents or slow LLM responses.")
+            print(f"  Consider:")
+            print(f"    1. Using a simpler strategy (e.g., 'simple' instead of 'contextual_rag')")
+            print(f"    2. Reducing document size")
+            print(f"    3. Checking Ollama server performance")
+        else:
+            print(f"ERROR: Enhanced ingestion failed: {e}")
+        
         import traceback
         print(f"Full error: {traceback.format_exc()}")
         return None

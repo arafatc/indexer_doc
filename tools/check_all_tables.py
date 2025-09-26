@@ -25,7 +25,7 @@ for table in tables:
     except Exception as e:
         count = f"Error: {e}"
     
-    print(f'\n📋 Table: {table_name}')
+    print(f'\n Table: {table_name}')
     print(f'   Rows: {count}')
     
     # Get all columns and their data types
@@ -39,7 +39,7 @@ for table in tables:
     columns = cursor.fetchall()
     
     if columns:
-        print('   📝 Columns:')
+        print('    Columns:')
         text_columns = []
         
         for col_name, data_type, max_length, nullable in columns:
@@ -48,7 +48,7 @@ for table in tables:
             
             if is_text_column:
                 text_columns.append(col_name)
-                marker = ' 📄 TEXT'
+                marker = '  TEXT'
             else:
                 marker = ''
             
@@ -59,13 +59,13 @@ for table in tables:
         
         # Summary of text columns
         if text_columns:
-            print(f'   🎯 Text Columns: {", ".join(text_columns)}')
+            print(f'    Text Columns: {", ".join(text_columns)}')
         else:
-            print('   ⚠️  No text columns found')
+            print('     No text columns found')
             
         # For specific tables, show sample data from text columns
         if any(keyword in table_name.lower() for keyword in ['llamaindex', 'document', 'embedding']) and text_columns:
-            print('   📊 Sample text data:')
+            print('    Sample text data:')
             for text_col in text_columns[:2]:  # Show max 2 text columns
                 try:
                     cursor.execute(f'SELECT "{text_col}" FROM "{table_name}" WHERE "{text_col}" IS NOT NULL LIMIT 1;')
@@ -76,7 +76,7 @@ for table in tables:
                 except Exception as e:
                     print(f'      {text_col}: Error reading sample - {e}')
     else:
-        print('   ⚠️  No columns found')
+        print('     No columns found')
 
 print('\n' + '=' * 60)
 print('🔍 Summary - Tables with Text Content:')
@@ -108,7 +108,7 @@ for table in tables:
         except Exception as e:
             count_display = f"(Error: {e})"
         
-        print(f'  📋 {table_name}: {", ".join(text_columns)} {count_display}')
+        print(f'   {table_name}: {", ".join(text_columns)} {count_display}')
 
 cursor.close()
 conn.close()
